@@ -6,7 +6,7 @@
 
 ## 📌 Sobre el proyecto
 
-MagicTickets es un sistema integrador que evoluciona hito a hito a lo largo del curso, hasta convertirse en una aplicación full-stack completa. Este repositorio corresponde al **Hito 2**: la capa de frontend, construida en **TypeScript Vanilla** sobre **Vite**, sin frameworks de UI.
+MagicTickets es un sistema integrador que evoluciona hito a hito a lo largo del curso, hasta convertirse en una aplicación full-stack completa. Este repositorio corresponde al **Hito 2**: la capa de frontend, construida en **TypeScript** sobre **Vite**, sin frameworks de componentes JavaScript (ver detalle de tecnologías más abajo).
 
 La aplicación muestra una cartelera de eventos disponibles para la venta de entradas. Cada evento se presenta en una tarjeta con su información principal (fecha, categoría, estado y disponibilidad). Al seleccionar un evento, se despliega un formulario de compra que valida la cantidad de entradas solicitadas contra las mismas reglas de negocio definidas en el dominio Java del **Hito 1** (cantidad positiva, máximo 5 entradas por compra, y stock disponible), antes de confirmar la reserva.
 
@@ -36,7 +36,7 @@ magictickets-frontend/
 │   │       ├── EventCard.ts
 │   │       └── index.ts
 │   ├── models/
-│   │   └── event.ts             # Interface ShowEvent, enums, mock data, isAvailable()
+│   │   └── event.ts             # Interface ShowEvent (incluye imageUrl), enums, mock data, isAvailable()
 │   ├── services/
 │   │   └── eventService.ts      # Llamada asíncrona (fetch) aislada de la UI
 │   ├── styles/
@@ -60,7 +60,7 @@ magictickets-frontend/
 ## ✅ Pilares del Hito 2
 
 ### 1. Modelado de datos en TypeScript
-- Interface hermética `ShowEvent` con tipos primitivos claros, sin `any`.
+- Interface hermética `ShowEvent`, con tipos primitivos y enumeraciones propias como tipos de campo — sin `any` en ningún punto.
 - Enumeraciones estrictas `ShowStatus` y `ShowCategory` para el control de estados críticos.
 
 ### 2. Manejo del DOM y formularios
