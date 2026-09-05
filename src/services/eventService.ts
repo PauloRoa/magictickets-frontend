@@ -1,9 +1,11 @@
-export async function fetchEventsFromServer(): Promise<void> {
-  const response = await fetch("https://jsonplaceholder.typicode.com/posts?_limit=2");
+import type { ShowEvent } from "../models/event";
+
+export async function fetchEventsFromServer(): Promise<ShowEvent[]> {
+  const response = await fetch("http://localhost:8080/api/v1/events");
 
   if (!response.ok) {
     throw new Error(`Server Error: HTTP Code ${response.status}`);
   }
 
-  await response.json();
+  return await response.json();
 }
