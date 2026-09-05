@@ -1,16 +1,27 @@
 # 🎟️ MagicTickets — Frontend Dinámico
 
-> Proyecto integrador autónomo desarrollado en el curso **"Frontend Dinámico con TypeScript y Vite"**, correspondiente al **Hito 2** de MagicTickets: una plataforma de venta de entradas para eventos (conciertos, teatro, deporte, conferencias y más).
+> Proyecto desarrollado en el curso, correspondiente al **Hito 2** de MagicTickets (frontend en TypeScript/Vite) y consolidado en la **entrega Final** (Integración Full-Stack y Validación): una plataforma de venta de entradas para eventos (conciertos, teatro, deporte, conferencias y más), integrada de punta a punta con un backend real en Spring Boot.
 
 ---
 
 ## 📌 Sobre el proyecto
 
-MagicTickets es un sistema integrador que evoluciona hito a hito a lo largo del curso, hasta convertirse en una aplicación full-stack completa. Este repositorio corresponde al **Hito 2**: la capa de frontend, construida en **TypeScript** sobre **Vite**, sin frameworks de componentes JavaScript.
+MagicTickets es un sistema integrador que evolucionó hito a hito a lo largo del curso hasta convertirse en una aplicación full-stack completa. Este repositorio corresponde a la capa de frontend, construida en **TypeScript** sobre **Vite**, sin frameworks de componentes JavaScript.
 
-La aplicación muestra una cartelera de eventos disponibles para la venta de entradas. Cada evento se presenta en una tarjeta con su información principal (fecha, categoría, estado y disponibilidad). Al seleccionar un evento, se despliega un formulario de compra que valida la cantidad de entradas solicitadas contra las mismas reglas de negocio definidas en el dominio Java del **Hito 1** (cantidad positiva, máximo 5 entradas por compra, y stock disponible), antes de confirmar la reserva.
+La aplicación muestra una cartelera de eventos disponibles para la venta de entradas, obtenida en tiempo real desde el microservicio backend (`magictickets-backend`, Spring Boot + PostgreSQL). Cada evento se presenta en una tarjeta con su información principal (fecha, categoría, estado y disponibilidad). Al seleccionar un evento, se despliega un formulario de compra que valida localmente la cantidad solicitada (cantidad positiva, máximo 5 entradas, stock suficiente) y luego envía la compra real al backend, que aplica la misma validación como única fuente de verdad — cualquier respuesta de error del servidor (ej. stock agotado) se muestra directamente al usuario.
 
-El proyecto no reinicia el dominio de negocio en cada hito: el modelo `ShowEvent` de esta unidad conserva y amplía la entidad `Event` ya definida en Java (`name`, `stock`), agregando los campos `date`, `status` y `category` como evolución natural del dominio — evolución que está prevista para reflejarse también en el backend Java en unidades futuras (Arquitectura Limpia y DDD).
+El proyecto no reinicia el dominio de negocio en cada hito: el modelo `ShowEvent` conserva y amplía la entidad `Event` del dominio Java (`name`, `stock`), incorporando `id`, `date`, `status`, `category` e `imageUrl` — evolución de dominio ya reflejada en ambos lados (frontend y backend) tras la integración full-stack de la entrega Final.
+
+---
+
+## 📄 Recorrido del proyecto
+
+| Etapa | Qué aportó a este frontend | Estado |
+|---|---|---|
+| Hito 2 — Frontend Dinámico con TypeScript y Vite | Modelo `ShowEvent`, componente `EventCard`, manipulación segura del DOM, formulario de compra con validación local replicando las reglas del dominio Java (Hito 1). El `fetch` asíncrono existía solo como ejercicio de manejo de errores contra un endpoint externo simulado; su respuesta se descartaba y el renderizado siempre usaba `mockEvents` — no había conexión real al backend. | ✅ 10.0/10.0 |
+| Entrega Final — Integración Full-Stack y Validación | Conexión real de punta a punta con `magictickets-backend`: `eventService.ts` retipado para leer eventos reales desde PostgreSQL (`Promise<ShowEvent[]>`, ya no descarta la respuesta); `purchaseService.ts` (nuevo) para enviar compras reales; `main.ts` ya no usa `mockEvents`, sino el resultado real del backend, refrescando el stock tras cada compra exitosa; `ShowEvent` ganó el campo `id`, necesario para identificar el evento real en la compra. | ✅ Entrega final |
+
+El modelo de datos y las validaciones de negocio nunca se reiniciaron entre hitos: la integración final solo reemplazó la fuente de los datos (de `mockEvents` a la API real), sin rehacer la lógica de UI ya construida.
 
 ---
 
@@ -36,12 +47,13 @@ magictickets-frontend/
 │   │       ├── EventCard.ts
 │   │       └── index.ts
 │   ├── models/
-│   │   └── event.ts             # Interface ShowEvent (incluye imageUrl), enums, mock data, isAvailable()
+│   │   └── event.ts             # Interface ShowEvent (id, date, status, category, imageUrl), enums, mock data, isAvailable()
 │   ├── services/
-│   │   └── eventService.ts      # Llamada asíncrona (fetch) aislada de la UI
+│   │   ├── eventService.ts      # fetch real a GET /api/v1/events, aislado de la UI
+│   │   └── purchaseService.ts   # fetch real a POST /api/v1/purchases, aislado de la UI
 │   ├── styles/
 │   │   └── global.css           # Directivas de Tailwind CSS v4 + reglas CSS propias
-│   └── main.ts                  # Orquestación: renderizado, eventos y validaciones
+│   └── main.ts                  # Orquestación: renderizado, eventos, validaciones y compra real
 ├── index.html                   # Plantilla HTML semántica principal
 ├── package.json
 ├── tsconfig.json
@@ -50,14 +62,15 @@ magictickets-frontend/
 
 **Principios de diseño aplicados:**
 
-- **Single Responsibility:** `eventService.ts` solo se encarga de la petición de red y de validar el canal HTTP; `main.ts` orquesta el DOM y decide qué mostrar según el resultado.
+- **Single Responsibility:** `eventService.ts` y `purchaseService.ts` solo se encargan de la comunicación de red y de validar el canal HTTP; `main.ts` orquesta el DOM y decide qué mostrar según el resultado.
 - **Componentes funcionales:** `generateEventCardHtml` es una función pura que recibe datos y devuelve HTML, sin efectos secundarios ni estado propio.
 - **Disponibilidad como función derivada:** `isAvailable(event)` calcula la disponibilidad a partir de `stock` en tiempo real, en lugar de almacenarla como un campo independiente que podría desincronizarse.
-- **YAGNI:** no se modelaron atributos ni estados que el negocio no requiere explícitamente. Única excepción intencional: `imageUrl`, incorporado con fines exclusivamente visuales (no es parte de una regla de negocio ni del dominio Java) para dar identidad visual a cada tarjeta de evento.
+- **Defensa en profundidad en la validación de compra:** las reglas de negocio (cantidad positiva, máximo 5, stock suficiente) se validan tanto en el cliente (feedback inmediato) como en el backend (única fuente de verdad real e innegociable, ya que cualquiera puede saltarse el frontend con una petición HTTP directa).
+- **YAGNI, con una excepción documentada:** no se modelaron atributos ni estados que el negocio no requiere explícitamente. `imageUrl` se incorporó desde Hito 2 con fines exclusivamente visuales; en ese momento no era parte del dominio Java. Desde la entrega Final, sí lo es — se agregó a `Event.java` en el backend por decisión consciente de alinear el dominio al contrato ya definido por el frontend, cerrando la brecha que existía entre ambos lados.
 
 ---
 
-## ✅ Pilares del Hito 2
+## ✅ Pilares del proyecto
 
 ### 1. Modelado de datos en TypeScript
 - Interface hermética `ShowEvent`, con tipos primitivos y enumeraciones propias como tipos de campo — sin `any` en ningún punto.
@@ -70,11 +83,12 @@ magictickets-frontend/
 - Captura de clics mediante *event delegation* (`target.closest(".event-card")`).
 - Validaciones reactivas de negocio: cantidad positiva, máximo 5 entradas, stock suficiente.
 
-### 3. Arquitectura asíncrona
-- Función `async`/`await` para el consumo de datos, sin cadenas de `.then()`.
-- Bloque `try`/`catch` envolviendo la llamada `fetch`, con validación explícita de `response.ok`.
-- Feedback visual de carga inyectado en el DOM antes de disparar la petición.
-- Manejo de errores tipado (`error instanceof Error`), sin recurrir a `any`.
+### 3. Arquitectura asíncrona e integración real
+- Funciones `async`/`await` para el consumo y envío de datos, sin cadenas de `.then()`.
+- Bloques `try`/`catch` envolviendo las llamadas `fetch`, con validación explícita de `response.ok`.
+- Feedback visual de carga inyectado en el DOM antes de disparar cada petición.
+- Manejo de errores tipado (`error instanceof Error`), mostrando el mensaje real devuelto por el backend.
+- Tras una compra exitosa, se recarga la cartelera desde el backend para reflejar el stock real actualizado en PostgreSQL — nunca se resta stock manualmente en el cliente.
 
 ---
 
@@ -90,6 +104,8 @@ npm install
 npm run dev
 ```
 
+**Requisito:** el backend (`magictickets-backend`) debe estar corriendo en `http://localhost:8080` para que la carga de eventos y la compra funcionen — ver su propio README para instrucciones de arranque y configuración de variables de entorno.
+
 ### 3. Verificar tipos y compilar para producción
 ```bash
 npm run build
@@ -97,14 +113,6 @@ npm run build
 
 ---
 
-## 📄 Continuidad del proyecto
+## 📄 Repositorio relacionado
 
-| Hito | Unidad | Stack | Estado |
-|------|--------|-------|--------|
-| Hito 1 | Fundamentos de Calidad y TDD en Java | Java + JUnit + Mockito | ✅ Entregado |
-| **Hito 2** | **Frontend Dinámico con TypeScript y Vite** | **TypeScript + Vite** | **✅ Este repositorio** |
-| Hito 3 | Arquitectura Limpia y DDD | Java | ⏳ Pendiente |
-| Hito 4 | Microservicios con Spring Boot | Java + Docker | ⏳ Pendiente |
-| Final | Integración Full-Stack | Java + TypeScript | ⏳ Pendiente |
-
-Repositorio del Hito 1 (dominio Java): [magictickets](https://github.com/PauloRoa/magictickets)
+Repositorio del backend (dominio Java + Spring Boot): [magictickets-backend](https://github.com/PauloRoa/magictickets-backend)
