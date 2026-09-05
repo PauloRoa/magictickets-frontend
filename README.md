@@ -40,8 +40,14 @@ El modelo de datos y las validaciones de negocio nunca se reiniciaron entre hito
 ```text
 magictickets-frontend/
 ├── public/
+│   ├── favicon.svg
+│   ├── icons.svg
 │   └── events/                  # Imágenes de cada evento
 ├── src/
+│   ├── assets/                  # Recursos estáticos (logo, imagen de portada)
+│   │   ├── hero.png
+│   │   ├── typescript.svg
+│   │   └── vite.svg
 │   ├── components/
 │   │   └── EventCard/           # Componente funcional de renderizado de tarjetas
 │   │       ├── EventCard.ts
